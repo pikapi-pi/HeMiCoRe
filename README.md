@@ -111,7 +111,7 @@ sh pretrain.sh
 
 ## Training from scratch, fine-tuning, and exporting the desicion-making patches
 
-evaluation of our proposed framework MuRCL. 
+evaluation of our proposed framework HeMiCoRe. 
 
 ```shell
 cd runs
