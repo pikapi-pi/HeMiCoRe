@@ -1,5 +1,5 @@
 # Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images
-This repo is the PyTorch implementation for the MuRCL described in the paper "MuRCL: Multi-instance Reinforcement Contrastive Learning for Whole Slide Image Classification". 
+This repo is the PyTorch implementation for the MuRCL described in the paper "Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images". 
 
 ![fig2](figs/fig2.png)
 
@@ -7,8 +7,8 @@ This repo is the PyTorch implementation for the MuRCL described in the paper "Mu
 
 ```
 │  requirements.yaml
-│  train_MuRCL.py  # pre-training MuRCL
-│  train_RLMIL.py  # training, fine-tuning and linear evaluating RLMIL 
+│  pretrain_HeMiCoRe.py  # pre-training HeMiCoRe
+│  train_HeMiCoRe.py  # training, fine-tuning and evaluating HeMiCoRe
 │          
 ├─models  # the model's architecture
 |      __init__.py
@@ -48,8 +48,7 @@ environment.yaml
 2. Tile all the WSI into patches
 
    ```shell
-   python create_patches.py --slide_dir /dir/to/silde --save_dir /save/dir/patch --overview --save_mask --wsi_format .tif --overview_level 3
-   e.g.  python create_patches.py --slide_dir /media/oasis/DATA_1/survival_prediction/KIRC/slide --save_dir /media/oasis/DATA_1/survival_prediction/KIRC --overview --save_mask --wsi_format .svs --overview_level 2
+   python create_patches.py --slide_dir /dir/to/silde --save_dir /save/dir/patch --overview --save_mask --wsi_format .svs --overview_level 2
    ```shell
     python extract_features_multiprocess.py --patch_dir /media/oasis/DATA/survival_prediction/patch --image_encoder resnet18 --device 0 --coord coord
    ```
@@ -130,7 +129,7 @@ This code could create the distribution map mentioned in our paper.
 
 ```shell
 cd my_utils
-python create_heatmaps.py
+python visualization.py
 ```
 
 <img src="/figs/tumor_006_pretrain.png" alt="tumor_006_pretrain" width="400" align="middle" /><img src="/figs/tumor_006_finetune.png" alt="tumor_006_finetune" width="400" align="middle" /> 
