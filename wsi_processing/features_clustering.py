@@ -16,46 +16,6 @@ def euclidean_similarity(x, args):
     similarity = np.exp(-dists * args.lamb)
     return similarity
 
-def APC(feats, args, filepath=None):
-    print(feats.shape)
-    umap_model = umap.UMAP(n_neighbors=15, min_dist=1, n_components=2, spread=1.0,
-                           random_state=42)  # 降维到2D空间，可以根据需要更改维度
-    umap_embedding = umap_model.fit_transform(feats)
-    # similarity = euclidean_similarity(feats, args)
-    af = KMeans(n_clusters=args.num_clusters, random_state=985).fit(umap_embedding)#AffinityPropagation(max_iter=400, convergence_iter=50, preference=args.preference, damping=args.damping, affinity="euclidean", random_state=42).fit(umap_embedding)
-    labels = af.labels_
-
-    # cluster_centers_indices = af.cluster_centers_indices_
-    # n_clusters = len(cluster_centers_indices)
-    # print(n_clusters)
-    # while n_clusters > 10:
-    #     af = AffinityPropagation(max_iter=400, convergence_iter=50, preference=None, damping=args.damping, affinity="euclidean", random_state=42).fit(cluster_centers)
-    #     cluster_centers = af.cluster_centers_
-    #     cluster_centers_indices = af.cluster_centers_indices_
-    #     n_clusters = len(cluster_centers_indices)
-    #     for i in range(len(labels)):
-    #         labels[i] = af.labels_[labels[i]]
-
-
-    print(np.unique(labels))
-    # print(len(af_1.cluster_centers_indices))
-    # y_hat = af.predict(similarity)
-    # clusters = np.unique(y_hat)
-    colors = ['#FFFF99', '#CCCCFF', '#FF9999', '#CC9933', '#9966FF', '#FF6666', '#FF3333', '#66FFFF',
-              '#66CCFF', '#660000', '#006600', '#CCCC00', '#669966']
-    # umap_model = umap.UMAP(n_neighbors=15, min_dist=1, n_components=2, spread=1.0, random_state=42)  # 降维到2D空间，可以根据需要更改维度
-    # umap_embedding = umap_model.fit_transform(feats)
-
-    # cluster_centers_embedding = af_2.cluster_centers_
-
-    for point, label in zip(umap_embedding, labels):
-        plt.scatter(point[0], point[1], color=colors[label], marker='o')
-    # plt.scatter(cluster_centers_embedding[:, 0], cluster_centers_embedding[:, 1], marker='x', color='red', s=100)
-    # for cluster in clusters:
-    #     row_ix = np.where(y_hat == cluster)
-    #     plt.scatter(umap_embedding[row_ix, 0], umap_embedding[row_ix, 1])
-    plt.show()
-
 def clustering(feats, num_clusters, filepath=None):
     k_means = KMeans(n_clusters=num_clusters, random_state=985).fit(feats)
     features_cluster_indices = np.expand_dims(k_means.labels_, axis=1)

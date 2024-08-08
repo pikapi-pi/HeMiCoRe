@@ -56,7 +56,7 @@ def get_datasets(args: object) -> object:
     indices = load_json(args.data_split_json)
     train_set = WSIWithCluster(
         data_csv=args.data_csv,
-        indices=indices['train'] + indices['valid'],
+        indices=indices['train'],
         shuffle=True,
         preload=args.preload,
     )

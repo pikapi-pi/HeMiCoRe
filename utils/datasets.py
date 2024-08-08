@@ -338,21 +338,21 @@ def get_feats(feat_list: List[torch.Tensor],
         per_coord = coord_list[i][indices, :][:feat_size]
 
         # associate topolopy with feature as a hypergraph
-        # cluster_ids, cluster_centers = kmeans(X=per_coord, num_clusters=coord_clusters, device=torch.device('cuda'))
-        # # labels = np.array(cluster_ids)
-        # labels = cluster_ids.tolist()
-        # across_hyperedge = []
+        cluster_ids, cluster_centers = kmeans(X=per_coord, num_clusters=coord_clusters, device=torch.device('cuda'))
+        # labels = np.array(cluster_ids)
+        labels = cluster_ids.tolist()
+        across_hyperedge = []
         # # for i in range(coord_clusters):
         # #     indices = np.where(labels == i)[0]
         # #     coord_distribution.append(tuple(indices))
         # #     distances = np.linalg.norm(per_coord[indices] - cluster_centers[i], axis=1)
         # #     sorted_distances_indices = np.argsort(distances)
         # #     across_hyperedge.extend(indices[sorted_distances_indices[:int(len(sorted_distances_indices) * feat_size_ratio)]])
-        # for x in set(labels):
-        #     across_hyperedge.append(labels.index(x))
-        #     indi = [i for i, value in enumerate(labels) if value == x]
-        #     coord_distribution.append(tuple(indi))
-        # coord_distribution.append(tuple(across_hyperedge))
+        for x in set(labels):
+            across_hyperedge.append(labels.index(x))
+            indi = [i for i, value in enumerate(labels) if value == x]
+            coord_distribution.append(tuple(indi))
+        coord_distribution.append(tuple(across_hyperedge))
         # print(coord_distribution)
         # assert 0 == 1, f""
         # if the patches of a wsi is smaller than feat_size, it is not enough for sampling a Fset, use [0] to pad it
@@ -374,4 +374,4 @@ def get_feats(feat_list: List[torch.Tensor],
     # print(len(indis))
     feats = torch.cat(feats, 0)
     # print(feats.shape)
-    return feats, construction_list, coord_distribution_list#, key_patches_list
+    return feats, construction_list, coord_distribution_list, key_patches_list

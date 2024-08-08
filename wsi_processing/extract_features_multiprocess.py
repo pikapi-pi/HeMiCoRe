@@ -14,31 +14,11 @@ import torchvision.transforms as torch_trans
 from torchvision import transforms
 from torchvision import models
 from PIL import Image
-sys.path.append("/media/oasis/DATA/survival_prediction/code/stain_normalization")
-import stainNorm_Reinhard
-import stainNorm_Vahadane
-import stainNorm_Macenko
+
+from ..stain_normalization import stainNorm_Reinhard, stainNorm_Vahadane, stainNorm_Macenko
 import cv2
 from torch.multiprocessing import Process, set_start_method
 
-# def color_normalization(img, REFER_PATH, c, args, encoder):
-#     cd = np.array([c['row'], c['col']], dtype=np.int32)
-#     img = np.asarray(img)
-#     p = np.percentile(img, 90)
-#     source_image = np.clip(img * 255.0 / p, 0, 255).astype(np.uint8)
-#     target_image = HistomicsTK_function.read_reference(REFER_PATH)
-#     try:
-#         processed_img = HistomicsTK_function.stain_normalization(source_image, target_image)
-#         processed_img = Image.fromarray(processed_img)
-#         transform = transforms.Compose([
-#             transforms.RandomHorizontalFlip(),  #随机水平翻转
-#             transforms.RandomRotation(45),  #随机旋转
-#             transforms.RandomVerticalFlip(),  #随机垂直翻转
-#         ])
-#         feature = extract(args, processed_img, encoder, transform)
-#         return feature, cd
-#     except:
-#         return None, np.array([-1, -1])
 
 def stain_normalization(img, REFER_PATH, c, args, encoder):
     cd = np.array([c['row'], c['col']], dtype=np.int32)
@@ -49,9 +29,9 @@ def stain_normalization(img, REFER_PATH, c, args, encoder):
         n.fit(refer_img)
         out = n.transform(img)
         transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(),  #随机水平翻转
-            transforms.RandomRotation(45),  #随机旋转
-            transforms.RandomVerticalFlip(),  #随机垂直翻转
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(45),
+            transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
         ])
         out = Image.fromarray(out)
@@ -85,7 +65,7 @@ def create_encoder(args):
         layers.append(nn.Flatten(1))
         encoder = nn.Sequential(*layers)
         encoder = nn.DataParallel(encoder)
-        checkpoint = torch.load('/media/oasis/DATA_1/KimiaNet_Weights/weights/KimiaNetPyTorchWeights.pth')
+        checkpoint = torch.load('../KimiaNet_Weights/weights/KimiaNetPyTorchWeights.pth')
         del checkpoint["module.fc_4.weight"]
         del checkpoint["module.fc_4.bias"]
         encoder.load_state_dict({k.replace('module.model', 'module'): v for k, v in checkpoint.items()}, strict=True)
@@ -218,12 +198,10 @@ def main():
     parser.add_argument('--save_dir', type=str, default=None)
     parser.add_argument('--image_encoder', type=str, default='resnet18')
     parser.add_argument('--device', default='0')
-    parser.add_argument('--process', default=16, help='for multiprocceing')
+    parser.add_argument('--process', default=16, help='the number of processors')
     parser.add_argument('--exist_ok', action='store_true', default=False)
     parser.add_argument('--coord', default='coord', help='for multiprocceing')
-    parser.add_argument('--refer_img',
-                        default='/media/oasis/DATA/survival_prediction/code/wsi_processing/12_44.png',
-                        help='for stain_normalization')
+    parser.add_argument('--refer_img', default='./12_44.png', help='target image for stain_normalization')
     args = parser.parse_args()
     run(args)
 

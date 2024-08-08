@@ -164,20 +164,9 @@ def run(args):
     slide_filepath_list = sorted(list(Path(args.slide_dir).rglob(f'*/*{args.wsi_format}')))
     # if need to filter files, add code here. example:
     # slide_filepath_list = [x for x in slide_filepath_list if str(x).find('DX') != -1]
-    clinical_data_path = "/media/oasis/DATA/survival_prediction/code/my_utils/new_CRC/TCGA_READ_clinical.csv"
-    clinical_data = pd.read_csv(clinical_data_path)
-    final_slide_filepath_list = []
-    print(sum(list(clinical_data['wsi_num'])))
-    for idx, case_id in enumerate(list(clinical_data['case_submitter_id'])):
-        for slide_filepath in slide_filepath_list:
-            # print(slide_filepath)
-            if str(case_id).replace('-', '_') in Path(slide_filepath).stem:
-                final_slide_filepath_list.append(slide_filepath)
-    num_slide = len(final_slide_filepath_list)
-    print(f"Slide number: {num_slide}.\n")
-    # assert 0==1,f""
+    num_slide = len(slide_filepath_list)
     print(f"Start tiling ...")
-    for slide_idx, slide_filepath in enumerate(final_slide_filepath_list):
+    for slide_idx, slide_filepath in enumerate(slide_filepath_list):
         # the filename to save, and as the index of each WSI
         if args.specify_filename:
             filename = slide_filepath.stem[args.filename_l:args.filename_r]

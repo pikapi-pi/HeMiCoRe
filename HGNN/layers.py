@@ -12,36 +12,14 @@ class HGNN_conv(nn.Module):
         is_last: bool = False,):
         super(HGNN_conv, self).__init__()
 
-        # self.weight = Parameter(torch.Tensor(in_ft, out_ft))
-        # if bias:
-        #     self.bias = Parameter(torch.Tensor(out_ft))
-        # else:
-        #     self.register_parameter('bias', None)
-        # self.reset_parameters()
+
         self.is_last = is_last
         self.bn = nn.BatchNorm1d(out_channels) if use_bn else None
         self.act = nn.LeakyReLU(inplace=True)
         self.drop = nn.Dropout(drop_rate)
         self.theta = nn.Linear(in_channels, out_channels, bias=bias)
 
-    # def reset_parameters(self):
-    #     stdv = 1. / math.sqrt(self.weight.size(1))
-    #     self.weight.data.uniform_(-stdv, stdv)
-    #     if self.bias is not None:
-    #         self.bias.data.uniform_(-stdv, stdv)
-
     def forward(self, x: torch.Tensor, Hg):
-        # if len(x.shape) < 3:
-        #     x = x.unsqueeze(0)
-        # b, n, f = x.shape
-        # # print(b,n,f)
-        # x = torch.mm(x.reshape(-1, f), self.weight)
-        # if self.bias is not None:
-        #     x = x + self.bias
-        # # print(x.dtype, G.dtype)
-        # f = x.shape[-1]
-        # x = torch.bmm(G, x.reshape(-1, n, f))
-        # return x
         if isinstance(Hg, list):
             if len(x.shape) < 3:
                 x = x.unsqueeze(0)
@@ -64,9 +42,6 @@ class HGNN_conv(nn.Module):
             if not self.is_last:
                 x = self.drop(self.act(x))
         return x
-
-
-
 
 
 class Attention_Pooling(nn.Module):

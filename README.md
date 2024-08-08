@@ -1,7 +1,7 @@
 # Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images
-This repo is the PyTorch implementation for the MuRCL described in the paper "Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images". 
+This repo is the PyTorch implementation for the MuRCL described in the paper "Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images".
 
-![fig2](figs/fig2.png)
+![fig2](figs/12_44.png)
 
 ## Folder structures
 
@@ -13,12 +13,11 @@ This repo is the PyTorch implementation for the MuRCL described in the paper "Hy
 ├─models  # the model's architecture
 |      __init__.py
 │      cl.py
-│      clam.py
 │      rlmil.py
 │      
 ├─runs  # the training scripts 
 │      finetune.sh
-│      linear.sh
+|      get_key_patch.sh
 │      pretrain.sh
 │      scratch.sh
 │      
@@ -48,9 +47,13 @@ environment.yaml
 2. Tile all the WSI into patches
 
    ```shell
-   python create_patches.py --slide_dir /dir/to/silde --save_dir /save/dir/patch --overview --save_mask --wsi_format .svs --overview_level 2
+   python create_patches.py --slide_dir /dir/to/silde --save_dir /save/dir/patch --overview --save_mask --wsi_format .tif --overview_level 3
+   ```
+
+3. Extract patch features
+
    ```shell
-    python extract_features_multiprocess.py --patch_dir /media/oasis/DATA/survival_prediction/patch --image_encoder resnet18 --device 0 --coord coord
+    python extract_features_multiprocess.py --patch_dir /dir/to/patch --image_encoder resnet18 --device 0 --coord coord
    ```
 
 4. Clustering patch features
@@ -58,27 +61,22 @@ environment.yaml
    ```shell
    python features_clustering.py --feat_dir /dir/to/patch/features --num_clusters 10
    ```
-5. visulize clustering distribution
-
-   ```shell
-      python visual_clustering.py --overview_level 2
-    ```
 
 ### Data Organization
 
 The format of  input csv file:
 
-|  case_id   |           features_filepath            | label |            clusters_filepath            |          clusters_json_filepath          |
-| :--------: | :------------------------------------: | :---: | :-------------------------------------: | :--------------------------------------: |
-| normal_001 | /path/to/patch_features/normal_001.npz |   0   | /path/to/cluster_indices/normal_001.npz | /path/to/cluster_indices/normal_001.json |
-|    ...     |                  ...                   |  ...  |                   ...                   |                   ...                    |
+|  case_id   |                features_filepath                | label |           clusters_filepath                      |               clusters_json_filepath              |
+| :--------: |:-----------------------------------------------:| :---: |:------------------------------------------------:|:-------------------------------------------------:|
+| normal_001 | /path/to/patch_features/2014_00322-3-HE-DX1.npz |   0   | /path/to/cluster_indices/2014_00322-3-HE-DX1.npz | /path/to/cluster_indices/2014_00322-3-HE-DX1.json |
+|    ...     |                       ...                       |  ...  |                       ...                        |                        ...                        |
 
 > **case_id**: [str] the index for each WSI. 
 >
 > **features_filepath**: [str] the .npz file path for each WSI, this .npz file contains several keywords as follows: 
 >
 > - filename: [str] case_id. 
-> - img_features: [numpy.ndarray] the all patch's features as a numpy.ndarray, the shape is (num_patches, dim_features), like (1937, 512). 
+> - img_features: [numpy.ndarray] the all patch's features as a numpy.ndarray, the shape is (num_patches, dim_features), like (9004, 512). 
 >
 > **label**: [int] the label of the WSI. 
 >
@@ -91,10 +89,10 @@ The format of  input csv file:
 >
 > ```json
 > [
->     [0, 30, 57, 58, 89, 113, 124, 131, ...],
->     [11, 13, 22, 25, 26, 34, 35, 45, 49, 50, 51, ...],
+>     [55, 68, 86, 112, 126, 131, 145, 149, ...],
+>     [0, 1, 5, 12, 27, 53, 74, 92, 134, 178, 185, ...],
 >     ...
->     [1, 8, 15, 16, ...]
+>     [6, 19, 30, 36, 45, 48, 61, 77, 78, ...]
 > ]
 > ```
 >
@@ -111,7 +109,7 @@ sh pretrain.sh
 
 ## Training from scratch, fine-tuning, and exporting the desicion-making patches
 
-evaluation of our proposed framework HeMiCoRe. 
+evaluation of our proposed framework MuRCL. 
 
 ```shell
 cd runs
@@ -129,11 +127,8 @@ This code could create the distribution map mentioned in our paper.
 
 ```shell
 cd my_utils
-python visualization.py
+python create_heatmaps.py
 ```
-
-<img src="/figs/tumor_006_pretrain.png" alt="tumor_006_pretrain" width="400" align="middle" /><img src="/figs/tumor_006_finetune.png" alt="tumor_006_finetune" width="400" align="middle" /> 
-
 
 
 ## Training on your own datasets
@@ -141,3 +136,4 @@ python visualization.py
 1. You can simply process your own dataset into a format acceptable to our code, see [WSI Processing](###WSI Processing) and [Data Organization](###Data Organization). 
 2. Then modify the input parameters of the training script in the runs directory. 
 
+-

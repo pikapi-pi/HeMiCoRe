@@ -21,9 +21,9 @@ from models import rlmil
 import dhg
 from HGNN import H_GNN
 
-LOG_FORMAT = "时间：%(asctime)s - 日志等级：%(levelname)s - 日志信息：%(message)s"
-# 对logger进行配置——日志等级&输出格式
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, filename='scratch.log')
+# LOG_FORMAT = "时间：%(asctime)s - 日志等级：%(levelname)s - 日志信息：%(message)s"
+# # 对logger进行配置——日志等级&输出格式
+# logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, filename='scratch.log')
 
 def create_save_dir(args):
     print(args.base_save_dir)
@@ -40,27 +40,7 @@ def create_save_dir(args):
     dir3 = '_'.join(rlmil_setting)
     dir4 = args.arch
     # Arch Setting
-    if args.arch in ['ABMIL']:
-        arch_setting = [
-            f'L{args.L}',
-            f'D{args.D}',
-            f'dpt{args.dropout}',
-        ]
-    elif args.arch in ['DSMIL']:
-        arch_setting = ['default']
-    elif args.arch in ['CLAM_SB']:
-        arch_setting = [
-            f"size_{args.size_arg}",
-            f"ks_{args.k_sample}",
-            f"bw_{args.bag_weight}"
-        ]
-    elif args.arch in ['HGCN']:
-        arch_setting = [
-            f"depth_{args.GCN_depth}",
-            f"mediator_{args.mediators}",
-            f"fast_{args.fast}"
-        ]
-    elif args.arch in ['HGNN']:
+    if args.arch in ['HGNN']:
         arch_setting = [
             f'depth_{args.GCN_depth}',
             f'cluster_{args.Cluster}'
@@ -81,7 +61,7 @@ def create_save_dir(args):
 def get_datasets(args):
     print(f"train_data: {args.train_data}")
     indices = load_json(args.data_split_json)
-    # print(len(indices['valid']), len(indices['train']))
+
     train_set = WSIWithCluster(
         args.data_csv,
         indices=indices[args.train_data],
@@ -96,22 +76,15 @@ def get_datasets(args):
         shuffle=False,
         preload=args.preload
     )
-    test_set_TCGA = WSIWithCluster(
+    test_set = WSIWithCluster(
         args.data_csv,
         indices=indices['test'],
         num_sample_patches=args.feat_size,
         shuffle=False,
         preload=args.preload
     )
-    # test_set_ZJ = WSIWithCluster(
-    #     args.data_csv,
-    #     indices=indices['test_ZJ'],
-    #     num_sample_patches=args.feat_size,
-    #     shuffle=False,
-    #     preload=args.preload
-    # )
     args.num_clusters = train_set.num_clusters
-    return {'train': train_set, 'valid': valid_set, 'test': test_set_TCGA}, train_set.patch_dim, len(train_set)
+    return {'train': train_set, 'valid': valid_set, 'test': test_set}, train_set.patch_dim, len(train_set)
     # return {'train': train_set, 'valid': valid_set}, train_set.patch_dim, len(train_set)
 
 
@@ -285,14 +258,6 @@ def get_optimizer(args, model, fc):
                                         weight_decay=args.GCN_decay)
         elif args.optimizer == 'Adam':
             optimizer = torch.optim.Adam(params, betas=(args.beta1, args.beta2), weight_decay=args.GCN_decay)
-        # elif args.optimizer == 'PESG':
-        #     optimizer = PESG(params,
-        #                      loss_fn=loss_fn,
-        #                      lr=lr,
-        #                      momentum=0.9,
-        #                      margin=margin,
-        #                      epoch_decay=epoch_decay,
-        #                      weight_decay=args.GCN_decay)
         else:
             raise NotImplementedError
     else:
@@ -317,7 +282,7 @@ def get_scheduler(args, optimizer):
 
 # Train Model Functions ------------------------------------------------------------------------------------------------
 
-def train_GCN(args, epoch, train_set, model, fc, ppo, memory, criterion, optimiser, scheduler):
+def train_HGNN(args, epoch, train_set, model, fc, ppo, memory, criterion, optimiser, scheduler):
     print(f"train_GCN...")
     length = len(train_set)
     train_set.shuffle()
@@ -366,8 +331,8 @@ def train_GCN(args, epoch, train_set, model, fc, ppo, memory, criterion, optimis
                                                       feat_size=args.feat_size,
                                                       feat_size_ratio=args.feat_size_ratio, coord_clusters=args.coord_clusters)  # get WSI-Fset
 
-            # hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
-            hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
+            hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
+            # hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
             # print(hgs[0].H.shape)
             # assert 0==1, f""
             x_view = mixup(x_view, args.alpha)[0]
@@ -400,21 +365,18 @@ def train_GCN(args, epoch, train_set, model, fc, ppo, memory, criterion, optimis
                         action_sequence = ppo.select_action(states.to(0), memory)
                 x_view, construction_list, coord_distribution_list, key_patches_list  = get_feats(feat_list, cluster_list, coord_list,
                                                                                action_sequence=action_sequence, feat_size=args.feat_size, feat_size_ratio=args.feat_size_ratio, coord_clusters=args.coord_clusters)
-                #每采样一次，更新一次最后一条超边
-                # G = model.update_graph(construction_list, coord_distribution_list, args.feat_size, args)
-                # hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
-                hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
+                # combine feature-based hypergraph and coordinate-based hypergraph
+                hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
+                # hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
 
                 x_view = mixup(x_view, args.alpha)[0]
 
                 if args.train_stage != 2:
                     states, g_out = model(x_view, hgs)
-                    # outputs, states, g_out = model(HGNN_data['features'])
                     g_out = fc(g_out, restart=False)
                 else:
                     with torch.no_grad():
                         states, g_out = model(x_view, hgs)
-                        # outputs, states, g_out = model(HGNN_data['features'])
                         g_out = fc(g_out, restart=False)
                 # print(g_out, labels)
                 loss = criterion(g_out, labels)
@@ -465,7 +427,7 @@ def train_GCN(args, epoch, train_set, model, fc, ppo, memory, criterion, optimis
     logging.info(f"In epoch{epoch}, labels is {labels}\n g_outs is {g_outs}")
     return losses[-1].avg, acc, auc, precision, recall, f1_score, auprc
 
-def test_GCN(args, test_set, model, fc, ppo, memory, criterion):
+def test_HGNN(args, test_set, model, fc, ppo, memory, criterion):
     losses = [AverageMeter() for _ in range(args.T)]
     reward_list = [AverageMeter() for _ in range(args.T - 1)]
 
@@ -484,9 +446,6 @@ def test_GCN(args, test_set, model, fc, ppo, memory, criterion):
             all_action_sequences[f'{case_id}'] = {}
             HGNN_data = {}
             HGNN_data['n'] = feat.shape[-2]
-            # HGNN_data['hypergraph'] = {str(j): cluster[j] for j in range(len(cluster))}
-            # HGNN_data['features'] = feat.to(args.device)
-            # HGNN_data['labels'] = label
 
             feat = feat.unsqueeze(0).to(args.device)
             label = label.unsqueeze(0).to(args.device)
@@ -509,16 +468,12 @@ def test_GCN(args, test_set, model, fc, ppo, memory, criterion):
             # 每采样一次，更新一次最后一条超边
             # G = model.update_graph(construction_list, coord_distribution_list, args.feat_size, args)
             # 利用dhg包构造超图实例
-            # hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
-            hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
+            hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
+            # hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
             # x_view = mixup(x_view, args.alpha)[0]
             states, g_out = model(x_view, hgs)
             g_out = fc(g_out, restart=True)
 
-            # ins_loss = 0
-            # for r in result_dict:
-            #     ins_loss = ins_loss + r['instance_loss']
-            # ins_loss = ins_loss / len(feat_list)
             loss = criterion(g_out, labels)
             loss_list.append(loss)
 
@@ -540,8 +495,8 @@ def test_GCN(args, test_set, model, fc, ppo, memory, criterion):
                 all_action_sequences[f'{case_id}'][f'{patch_step}'] = action.cpu().numpy()[0].tolist()
                 # 每采样一次，更新一次最后一条超边
                 # G = model.update_graph(construction_list, coord_distribution_list, args.feat_size, args)
-                # hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
-                hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
+                hgs = [dhg.Hypergraph(args.feat_size, construction + coord_distribution_list[i]) for i, construction in enumerate(construction_list)]
+                # hgs = [dhg.Hypergraph(args.feat_size, construction) for i, construction in enumerate(construction_list)]
                 # x_view = mixup(x_view, args.alpha)[0]
                 states, g_out = model(x_view, hgs)
                 # outputs, states, g_out = model(HGNN_data['features'])
@@ -571,144 +526,6 @@ def test_GCN(args, test_set, model, fc, ppo, memory, criterion):
 
 
 # Basic Functions ------------------------------------------------------------------------------------------------------
-# for internal validation
-# def train(args, train_set, valid_set, model, fc, ppo, memory, criterion, optimizer, scheduler, tb_writer):
-#     # Init variables
-#     save_dir = args.save_dir
-#     best_train_acc = BestVariable(order='max')
-#     best_valid_acc = BestVariable(order='max')
-#     # best_test_acc = BestVariable(order='max')
-#
-#     best_train_auc = BestVariable(order='max')
-#     best_valid_auc = BestVariable(order='max')
-#     # best_test_auc = BestVariable(order='max')
-#     best_train_loss = BestVariable(order='min')
-#     best_valid_loss = BestVariable(order='min')
-#     # best_test_loss = BestVariable(order='min')
-#     best_score = BestVariable(order='max')
-#     final_loss, final_acc, final_auc, final_precision, final_recall, final_f1_score, final_auprc, final_epoch = 0., 0., 0., 0., 0., 0., 0., 0
-#     header = ['epoch', 'train', 'valid', 'best_train', 'best_valid']
-#     losses_csv = CSVWriter(filename=Path(save_dir) / 'losses.csv', header=header)
-#     accs_csv = CSVWriter(filename=Path(save_dir) / 'accs.csv', header=header)
-#     aucs_csv = CSVWriter(filename=Path(save_dir) / 'aucs.csv', header=header)
-#     results_csv = CSVWriter(filename=Path(save_dir) / 'results.csv',
-#                             header=['epoch', 'final_epoch', 'final_loss', 'final_acc', 'final_auc', 'final_precision',
-#                                     'final_recall', 'final_f1_score', 'final_auprc'])
-#
-#     best_model = copy.deepcopy({'state_dict': model.state_dict()})
-#     early_stop = EarlyStop(max_num_accordance=args.patience) if args.patience is not None else None
-#     for epoch in range(args.epochs):
-#         print(f"Training Stage: {args.train_stage}, lr:")
-#         if optimizer is not None:
-#             for k, group in enumerate(optimizer.param_groups):
-#                 print(f"group[{k}]: {group['lr']}")
-#
-#         train_loss, train_acc, train_auc, train_precision, train_recall, train_f1_score, train_auprc = \
-#             TRAIN[args.arch](args, epoch, train_set, model, fc, ppo, memory, criterion, optimizer, scheduler)
-#         # assert 0 == 1
-#         valid_loss, valid_acc, valid_auc, valid_precision, valid_recall, valid_f1_score, valid_auprc, valid_outputs_tensor, valid_labels_tensor, valid_case_id_list, *_ = \
-#             TEST[args.arch](args, valid_set, model, fc, ppo, memory, criterion)
-#         # test_loss, test_acc, test_auc, test_precision, test_recall, test_f1_score, *_ = \
-#         #     TEST[args.arch](args, test_set, model, fc, ppo, memory, criterion)
-#
-#         # Write to tensorboard
-#         if tb_writer is not None:
-#             tb_writer.add_scalar('train/1.train_loss', train_loss, epoch)
-#             tb_writer.add_scalar('test/2.test_loss', valid_loss, epoch)
-#
-#         # Choose the best result
-#         if args.picked_method == 'acc':
-#             is_best = best_valid_acc.compare(valid_acc)
-#         elif args.picked_method == 'loss':
-#             is_best = best_valid_loss.compare(valid_loss)
-#         elif args.picked_method == 'auc':
-#             is_best = best_valid_auc.compare(valid_auc)
-#         elif args.picked_method == 'score':
-#             score = get_score(valid_acc, valid_auc, valid_precision, valid_recall, valid_f1_score)
-#             print(f"score:{score}")
-#             is_best = best_score.compare(score, epoch + 1, inplace=True)
-#         else:
-#             raise ValueError(f"picked_method error. ")
-#         if is_best:
-#             final_epoch = epoch + 1
-#             final_loss = valid_loss
-#             final_acc = valid_acc
-#             final_auc = valid_auc
-#             final_precision = valid_precision
-#             final_recall = valid_recall
-#             final_f1_score = valid_f1_score
-#             final_auprc = valid_auprc
-#             preds = get_preds(valid_outputs_tensor, valid_labels_tensor, valid_case_id_list)
-#             final_result = [final_loss, final_acc, final_auc, final_precision, final_recall, final_f1_score, final_auprc]
-#
-#         # Compute best result
-#         best_train_acc.compare(train_acc, epoch + 1, inplace=True)
-#         best_valid_acc.compare(valid_acc, epoch + 1, inplace=True)
-#         # best_test_acc.compare(test_acc, epoch + 1, inplace=True)
-#         best_train_loss.compare(train_loss, epoch + 1, inplace=True)
-#         best_valid_loss.compare(valid_loss, epoch + 1, inplace=True)
-#         # best_test_loss.compare(test_loss, epoch + 1, inplace=True)
-#         best_train_auc.compare(train_auc, epoch + 1, inplace=True)
-#         best_valid_auc.compare(valid_auc, epoch + 1, inplace=True)
-#         # best_test_auc.compare(test_auc, epoch + 1, inplace=True)
-#
-#         state = {
-#             'epoch': epoch + 1,
-#             'model_state_dict': model.state_dict(),
-#             'fc': fc.state_dict() if fc else None,
-#             'optimizer': optimizer.state_dict() if optimizer else None,
-#             'ppo_optimizer': ppo.optimizer.state_dict() if ppo else None,
-#             'policy': ppo.policy.state_dict() if ppo else None,
-#         }
-#         if is_best:
-#             best_model = copy.deepcopy(state)
-#             if args.save_model:
-#                 save_checkpoint(state, is_best, str(save_dir))
-#
-#         # Save
-#         losses_csv.write_row([epoch + 1, train_loss, valid_loss,
-#                               (best_train_loss.best, best_train_loss.epoch),
-#                               (best_valid_loss.best, best_valid_loss.epoch)])
-#                               # (best_test_loss.best, best_test_loss.epoch)])
-#         accs_csv.write_row([epoch + 1, train_acc, valid_acc,
-#                             (best_train_acc.best, best_train_acc.epoch),
-#                             (best_valid_acc.best, best_valid_acc.epoch)])
-#                             # (best_test_acc.best, best_test_acc.epoch)])
-#         aucs_csv.write_row([epoch + 1, train_auc, valid_auc,
-#                             (best_train_auc.best, best_train_auc.epoch),
-#                             (best_valid_auc.best, best_valid_auc.epoch)])
-#                             # (best_test_auc.best, best_test_auc.epoch)])
-#         # results_csv.write_row(
-#         #     [epoch + 1, final_epoch, test_loss, test_acc, test_auc, test_precision, test_recall, test_f1_score])
-#
-#         results_csv.write_row(
-#             [epoch + 1, final_epoch, valid_loss, valid_acc, valid_auc, valid_precision, valid_recall, valid_f1_score, valid_auprc])
-#
-#         print(
-#             f"Train acc: {train_acc:.4f}, Best: {best_train_acc.best:.4f}, Epoch: {best_train_acc.epoch:2}, "
-#             f"AUC: {train_auc:.4f}, Best: {best_train_auc.best:.4f}, Epoch: {best_train_auc.epoch:2}, "
-#             f"Loss: {train_loss:.4f}, Best: {best_train_loss.best:.4f}, Epoch: {best_train_loss.epoch:2}\n"
-#             f"Valid acc: {valid_acc:.4f}, Best: {best_valid_acc.best:.4f}, Epoch: {best_valid_acc.epoch:2}, "
-#             f"AUC: {valid_auc:.4f}, Best: {best_valid_auc.best:.4f}, Epoch: {best_valid_auc.epoch:2}, "
-#             f"Loss: {valid_loss:.4f}, Best: {best_valid_loss.best:.4f}, Epoch: {best_valid_loss.epoch:2}\n"
-#             # f"Test  acc: {test_acc:.4f}, Best: {best_test_acc.best:.4f}, Epoch: {best_test_acc.epoch:2}, "
-#             # f"AUC: {test_auc:.4f}, Best: {best_test_auc.best:.4f}, Epoch: {best_test_auc.epoch:2}, "
-#             # f"Loss: {test_loss:.4f}, Best: {best_test_loss.best:.4f}, Epoch: {best_test_loss.epoch:2}\n"
-#             f"Final Epoch: {final_epoch:2}, Final acc: {final_acc:.4f}, Final AUC: {final_auc:.4f}, Final Loss: {final_loss:.4f}\n"
-#         )
-#
-#         # Early Stop
-#         if early_stop is not None:
-#             early_stop.update((best_valid_loss.best, best_valid_auc.best))
-#             if early_stop.is_stop():
-#                 break
-#
-#     if tb_writer is not None:
-#         tb_writer.close()
-#
-#     return best_model, final_result, preds
-
-# for external validation
 def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, criterion, optimizer,
           scheduler, tb_writer):
     # Init variables
@@ -716,33 +533,27 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
     best_train_acc = BestVariable(order='max')
     best_valid_acc = BestVariable(order='max')
     best_test_TCGA_acc = BestVariable(order='max')
-    # best_test_ZJ_acc = BestVariable(order='max')
+
 
     best_train_auc = BestVariable(order='max')
     best_valid_auc = BestVariable(order='max')
     best_test_TCGA_auc = BestVariable(order='max')
-    # best_test_ZJ_auc = BestVariable(order='max')
+
 
     best_train_loss = BestVariable(order='min')
     best_valid_loss = BestVariable(order='min')
     best_test_TCGA_loss = BestVariable(order='min')
-    # best_test_ZJ_loss = BestVariable(order='min')
+
 
     best_score = BestVariable(order='max')
     final_TCGA_loss, final_TCGA_acc, final_TCGA_auc, final_TCGA_precision, final_TCGA_recall, final_TCGA_f1_score, final_auprc, final_epoch = 0., 0., 0., 0., 0., 0., 0., 0
-    final_ZJ_loss, final_ZJ_acc, final_ZJ_auc, final_ZJ_precision, final_ZJ_recall, final_ZJ_f1_score = 0., 0., 0., 0., 0., 0.
     header = ['epoch', 'train', 'valid', 'test_TCGA', 'best_train', 'best_valid', 'best_test_TCGA']
-    # header = ['epoch', 'train', 'valid', 'best_train', 'best_valid']
     losses_csv = CSVWriter(filename=Path(save_dir) / 'losses.csv', header=header)
     accs_csv = CSVWriter(filename=Path(save_dir) / 'accs.csv', header=header)
     aucs_csv = CSVWriter(filename=Path(save_dir) / 'aucs.csv', header=header)
     TCGA_results_csv = CSVWriter(filename=Path(save_dir) / 'TCGA_results.csv',
                                header=['epoch', 'final_epoch', 'final_loss', 'final_acc', 'final_auc',
                                        'final_precision', 'final_recall', 'final_f1_score', 'final_auprc'])
-    # ZJ_results_csv = CSVWriter(filename=Path(save_dir) / 'ZJ_results.csv',
-    #                              header=['epoch', 'final_epoch', 'final_loss', 'final_acc', 'final_auc',
-    #                                      'final_precision',
-    #                                      'final_recall', 'final_f1_score'])
 
     best_model = copy.deepcopy({'state_dict': model.state_dict()})
     early_stop = EarlyStop(max_num_accordance=args.patience) if args.patience is not None else None
@@ -759,8 +570,6 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
             TEST[args.arch](args, valid_set, model, fc, ppo, memory, criterion)
         test_TCGA_loss, test_TCGA_acc, test_TCGA_auc, test_TCGA_precision, test_TCGA_recall, test_TCGA_f1_score, test_TCGA_auprc, TCGA_outputs_tensor, TCGA_labels_tensor, TCGA_case_id_list, *_ = \
             TEST[args.arch](args, test_set_TCGA, model, fc, ppo, memory, criterion)
-        # test_ZJ_loss, test_ZJ_acc, test_ZJ_auc, test_ZJ_precision, test_ZJ_recall, test_ZJ_f1_score, ZJ_outputs_tensor, ZJ_labels_tensor, ZJ_case_id_list, *_ = \
-        #     TEST[args.arch](args, test_set_ZJ, model, fc, ppo, memory, criterion)
 
         # Write to tensorboard
         if tb_writer is not None:
@@ -770,13 +579,13 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
         # Choose the best result
         if args.picked_method == 'acc':
             is_best = best_valid_acc.compare(valid_acc)
-            # is_best = best_test_GDPH_acc.compare(test_GDPH_acc)
+
         elif args.picked_method == 'loss':
             is_best = best_valid_loss.compare(valid_loss)
-            # is_best = best_test_GDPH_acc.compare(test_GDPH_loss)
+
         elif args.picked_method == 'auc':
             is_best = best_valid_auc.compare(valid_auc)
-            # is_best = best_test_GDPH_auc.compare(test_GDPH_auc)
+
         elif args.picked_method == 'score':
             score = get_score(valid_acc, valid_auc, valid_precision, valid_recall, valid_f1_score)
             is_best = best_score.compare(score, epoch + 1, inplace=True)
@@ -784,13 +593,6 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
             raise ValueError(f"picked_method error. ")
         if is_best:
             final_epoch = epoch + 1
-            # final_ZJ_loss = test_ZJ_loss
-            # final_ZJ_acc = test_ZJ_acc
-            # final_ZJ_auc = test_ZJ_auc
-            # final_ZJ_precision = test_ZJ_precision
-            # final_ZJ_recall = test_ZJ_recall
-            # final_ZJ_f1_score = test_ZJ_f1_score
-            # ZJ_preds = get_preds(ZJ_outputs_tensor, ZJ_labels_tensor, ZJ_case_id_list)
 
             final_TCGA_loss = test_TCGA_loss
             final_TCGA_acc = test_TCGA_acc
@@ -801,8 +603,6 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
             final_TCGA_auprc = test_TCGA_auprc
             TCGA_preds = get_preds(TCGA_outputs_tensor, TCGA_labels_tensor, TCGA_case_id_list)
 
-            # final_ZJ_result = [final_ZJ_loss, final_ZJ_acc, final_ZJ_auc, final_ZJ_precision,
-            #                      final_ZJ_recall, final_ZJ_f1_score]
             final_TCGA_result = [final_TCGA_loss, final_TCGA_acc, final_TCGA_auc, final_TCGA_precision, final_TCGA_recall,
                                final_TCGA_f1_score, final_TCGA_auprc]
 
@@ -810,17 +610,14 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
         best_train_acc.compare(train_acc, epoch + 1, inplace=True)
         best_valid_acc.compare(valid_acc, epoch + 1, inplace=True)
         best_test_TCGA_acc.compare(test_TCGA_acc, epoch + 1, inplace=True)
-        # best_test_ZJ_acc.compare(test_ZJ_acc, epoch + 1, inplace=True)
 
         best_train_loss.compare(train_loss, epoch + 1, inplace=True)
         best_valid_loss.compare(valid_loss, epoch + 1, inplace=True)
         best_test_TCGA_loss.compare(test_TCGA_loss, epoch + 1, inplace=True)
-        # best_test_ZJ_loss.compare(test_ZJ_loss, epoch + 1, inplace=True)
 
         best_train_auc.compare(train_auc, epoch + 1, inplace=True)
         best_valid_auc.compare(valid_auc, epoch + 1, inplace=True)
         best_test_TCGA_auc.compare(test_TCGA_auc, epoch + 1, inplace=True)
-        # best_test_ZJ_auc.compare(test_ZJ_auc, epoch + 1, inplace=True)
 
         state = {
             'epoch': epoch + 1,
@@ -840,24 +637,21 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
                               (best_train_loss.best, best_train_loss.epoch),
                               (best_valid_loss.best, best_valid_loss.epoch),
                               (best_test_TCGA_loss.best, best_test_TCGA_loss.epoch)])
-                              # (best_test_ZJ_loss.best, best_test_ZJ_loss.epoch)])
+
         accs_csv.write_row([epoch + 1, train_acc, valid_acc, test_TCGA_acc,
                             (best_train_acc.best, best_train_acc.epoch),
                             (best_valid_acc.best, best_valid_acc.epoch),
                             (best_test_TCGA_acc.best, best_test_TCGA_acc.epoch)])
-                            # (best_test_ZJ_acc.best, best_test_ZJ_acc.epoch)])
+
         aucs_csv.write_row([epoch + 1, train_auc, valid_auc, test_TCGA_auc,
                             (best_train_auc.best, best_train_auc.epoch),
                             (best_valid_auc.best, best_valid_auc.epoch),
                             (best_test_TCGA_auc.best, best_test_TCGA_auc.epoch)])
-                            # (best_test_ZJ_auc.best, best_test_ZJ_auc.epoch)])
+
         TCGA_results_csv.write_row(
             [epoch + 1, final_epoch, test_TCGA_loss, test_TCGA_acc, test_TCGA_auc, test_TCGA_precision, test_TCGA_recall,
              test_TCGA_f1_score, test_TCGA_auprc])
 
-        # ZJ_results_csv.write_row(
-        #     [epoch + 1, final_epoch, test_ZJ_loss, test_ZJ_acc, test_ZJ_auc, test_ZJ_precision,
-        #      test_ZJ_recall, test_ZJ_f1_score])
 
         print(
             f"Train acc: {train_acc:.4f}, Best: {best_train_acc.best:.4f}, Epoch: {best_train_acc.epoch:2}, "
@@ -868,16 +662,11 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
             f"AUC: {valid_auc:.4f}, Best: {best_valid_auc.best:.4f}, Epoch: {best_valid_auc.epoch:2}, "
             f"Loss: {valid_loss:.4f}, Best: {best_valid_loss.best:.4f}, Epoch: {best_valid_loss.epoch:2}\n"
 
-            f"TCGA_Test acc: {test_TCGA_acc:.4f}, Best: {best_test_TCGA_acc.best:.4f}, Epoch: {best_test_TCGA_acc.epoch:2}, "
+            f"Test acc: {test_TCGA_acc:.4f}, Best: {best_test_TCGA_acc.best:.4f}, Epoch: {best_test_TCGA_acc.epoch:2}, "
             f"AUC: {test_TCGA_auc:.4f}, Best: {best_test_TCGA_auc.best:.4f}, Epoch: {best_test_TCGA_auc.epoch:2}, "
             f"Loss: {test_TCGA_loss:.4f}, Best: {best_test_TCGA_loss.best:.4f}, Epoch: {best_test_TCGA_loss.epoch:2}\n"
 
-            # f"ZJ_Test acc: {test_ZJ_acc:.4f}, Best: {best_test_ZJ_acc.best:.4f}, Epoch: {best_test_ZJ_acc.epoch:2}, "
-            # f"AUC: {test_ZJ_auc:.4f}, Best: {best_test_ZJ_auc.best:.4f}, Epoch: {best_test_ZJ_auc.epoch:2}, "
-            # f"Loss: {test_ZJ_loss:.4f}, Best: {best_test_ZJ_loss.best:.4f}, Epoch: {best_test_ZJ_loss.epoch:2}\n"
-
             f"Final Epoch: {final_epoch:2}, Final TCGA_acc: {final_TCGA_acc:.4f}, Final TCGA_AUC: {final_TCGA_auc:.4f}, Final TCGA_Loss: {final_TCGA_loss:.4f}\n"
-            # f"Final ZJ_acc: {final_ZJ_acc:.4f}, Final ZJ_AUC: {final_ZJ_auc:.4f}, Final ZJ_Loss: {final_ZJ_loss:.4f}\n"
         )
 
         # Early Stop
@@ -889,9 +678,8 @@ def train(args, train_set, valid_set, test_set_TCGA, model, fc, ppo, memory, cri
     if tb_writer is not None:
         tb_writer.close()
 
-    return best_model, final_TCGA_result, TCGA_preds#, final_ZJ_result, ZJ_preds
+    return best_model, final_TCGA_result, TCGA_preds
 
-# for external validation
 def get_preds(outputs_tensor, labels_tensor, case_id_list):
     prob = torch.softmax(outputs_tensor, dim=1)
     _, pred = torch.max(prob, dim=1)
@@ -1046,33 +834,15 @@ def run(args):
     memory = rlmil.Memory()
     best_model, final_TCGA_result, TCGA_preds = train(args, datasets['train'], datasets['valid'], datasets['test'], model, fc, ppo, memory, criterion,
                        optimizer, scheduler, tb_writer)
-    # model.module.load_state_dict(best_model['model_state_dict'])
-    # fc.load_state_dict(best_model['fc'])
-    # if ppo is not None:
-    #     ppo.policy.load_state_dict(best_model['policy'])
-    # loss, acc, auc, precision, recall, f1_score, preds = \
-    #     test(args, datasets['test_GDPH'], model, fc, ppo, memory, criterion)
 
     # Save results
-    # preds.to_csv(str(Path(args.save_dir) / 'pred.csv'))
-    # final_res = pd.DataFrame(columns=['loss', 'acc', 'auc', 'precision', 'recall', 'f1_score', 'auprc'])
-    # final_res.loc[f'seed{args.seed}'] = final_result
-    # final_res.to_csv(str(Path(args.save_dir) / 'final_res.csv'))
+
     TCGA_preds.to_csv(str(Path(args.save_dir) / 'pred_TCGA.csv'))
     final_TCGA_res = pd.DataFrame(columns=['loss', 'acc', 'auc', 'precision', 'recall', 'f1_score', 'auprc'])
     final_TCGA_res.loc[f'seed{args.seed}'] = final_TCGA_result
     final_TCGA_res.to_csv(str(Path(args.save_dir) / 'final_TCGA_res.csv'))
 
-    # loss, acc, auc, precision, recall, f1_score, preds = \
-    #     test(args, datasets['test_ZJ'], model, fc, ppo, memory, criterion)
-
-    # Save results
-    # ZJ_preds.to_csv(str(Path(args.save_dir) / 'pred_ZJ.csv'))
-    # final_ZJ_res = pd.DataFrame(columns=['loss', 'acc', 'auc', 'precision', 'recall', 'f1_score'])
-    # final_ZJ_res.loc[f'seed{args.seed}'] = final_ZJ_result
-    # final_ZJ_res.to_csv(str(Path(args.save_dir) / 'final_ZJ_res.csv'))
-
-    # print(f'final_ZJ_res:{final_ZJ_res}\nfinal_GDPH_res:{final_GDPH_res}\nPredicted Ending.\n')
+    print(f'Training Over\n')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -1189,15 +959,15 @@ if __name__ == '__main__':
     torch.set_num_threads(1)
 
     # Global variables
-    MODELS = ['CLAM_SB', 'HGNN']
+    MODELS = ['HGNN']
 
     LOSSES = ['CrossEntropyLoss', 'FocalLoss']
 
     TRAIN = {
-        'HGNN': train_GCN,
+        'HGNN': train_HGNN,
     }
     TEST = {
-        'HGNN': test_GCN,
+        'HGNN': test_HGNN,
 
     }
 
