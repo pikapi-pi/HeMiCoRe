@@ -1,5 +1,5 @@
 # Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images
-This repo is the PyTorch implementation for the MuRCL described in the paper "Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images".
+This repo is the PyTorch implementation for the HeMiCoRe described in the paper "Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images".
 
 ![fig2](figs/12_44.png)
 
@@ -109,7 +109,7 @@ sh pretrain.sh
 
 ## Training from scratch, fine-tuning, and exporting the desicion-making patches
 
-evaluation of our proposed framework MuRCL. 
+evaluation of our proposed framework HeMiCoRe. 
 
 ```shell
 cd runs
@@ -127,7 +127,7 @@ This code could create the distribution map mentioned in our paper.
 
 ```shell
 cd my_utils
-python create_heatmaps.py
+python visualization.py
 ```
 
 
