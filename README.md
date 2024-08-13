@@ -9,7 +9,8 @@ This repo is the PyTorch implementation for the HeMiCoRe described in the paper 
 │  requirements.yaml
 │  pretrain_HeMiCoRe.py  # pre-training HeMiCoRe
 │  train_HeMiCoRe.py  # training, fine-tuning and evaluating HeMiCoRe
-│          
+├─HGNN
+|            
 ├─models  # the model's architecture
 |      __init__.py
 │      cl.py
@@ -96,7 +97,7 @@ The format of  input csv file:
 > ]
 > ```
 >
-> Each list represents a category.
+> Each list represents a cluster, and a WSI is divide into multiple subregions. Based on the affiliation between patches and subregions, a WSI can be regarded as a cluster-constrained hypergraph. MIL can be regarded as a form of graph          augmentation.
 
 ## Pre-training
 
