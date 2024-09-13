@@ -283,7 +283,7 @@ def get_scheduler(args, optimizer):
 # Train Model Functions ------------------------------------------------------------------------------------------------
 
 def train_HGNN(args, epoch, train_set, model, fc, ppo, memory, criterion, optimiser, scheduler):
-    print(f"train_GCN...")
+    print(f"train_HGNN...")
     length = len(train_set)
     train_set.shuffle()
 
@@ -715,7 +715,7 @@ def test(args, test_set, model, fc, ppo, memory, criterion):
 
     return loss, acc, auc, precision, recall, f1_score, preds, all_cases_key_patches_on_feature, all_cases_key_patches_on_coord, all_action_sequences
 
-
+# When you are running get_key_patch.sh, please use the follow function to replace the other
 # def run(args):
 #     init_seeds(args.seed)
 #
