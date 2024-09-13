@@ -6,10 +6,13 @@ This repo is the PyTorch implementation for the HeMiCoRe described in the paper 
 ## Folder structures
 
 ```
-│  requirements.yaml
+│  environment.yaml
 │  pretrain_HeMiCoRe.py  # pre-training HeMiCoRe
 │  train_HeMiCoRe.py  # training, fine-tuning and evaluating HeMiCoRe
 ├─HGNN
+|      H_GNN.py
+|      hypergraph_util.py
+|      layers.py
 |            
 ├─models  # the model's architecture
 |      __init__.py
