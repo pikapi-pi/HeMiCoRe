@@ -21,9 +21,6 @@ from models import rlmil
 import dhg
 from HGNN import H_GNN
 
-# LOG_FORMAT = "时间：%(asctime)s - 日志等级：%(levelname)s - 日志信息：%(message)s"
-# # 对logger进行配置——日志等级&输出格式
-# logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, filename='scratch.log')
 
 def create_save_dir(args):
     print(args.base_save_dir)
