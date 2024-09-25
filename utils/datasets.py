@@ -308,28 +308,25 @@ def get_feats(feat_list: List[torch.Tensor],
         # compute the indices of selected features by action_sequence(a sequence ranging [0, 1))
         seed = torch.floor(action_sequence[i] * num_feats_cluster).int()
 
-        indices = []#保存的是patch的特征向量在特征矩阵中的索引
-        final_hyperedge = [] #最后一条超边
-        # hypergnn = {}
+        indices = []
+        final_hyperedge = [] 
+       
         for j, c in enumerate(clusters_list[i]):
             random.seed(seed)
             index = random.sample(c, num_feats_cluster_size[j])
             num_feats_interedge = random.sample(index, num_feats_interedge_size[j])
             final_hyperedge.extend(num_feats_interedge)
             construction.append(tuple(index))
-            indices.extend(index)#用于选择对应的特征向量
-        # print(f"in get_feat, {len(final_hyperedge)}")
+            indices.extend(index)
+       
         construction.append(tuple(final_hyperedge))
         key_patches_list.append(construction)
         sorted_list = sorted(set([element for tpl in construction for element in tpl ]))[:feat_size]
-        # print(len(sorted_list))
+      
         sorted_construction = []
         for hyperedge in construction:
             new = tuple((sorted_list.index(val) for val in hyperedge if val in sorted_list))
             sorted_construction.append(new)
-
-
-            # hypergnn[str(j)] = sorted(index)
         indices = sorted(indices)
         indices = torch.tensor(indices)
         # construct WSI-Fset
@@ -339,22 +336,19 @@ def get_feats(feat_list: List[torch.Tensor],
 
         # associate topolopy with feature as a hypergraph
         cluster_ids, cluster_centers = kmeans(X=per_coord, num_clusters=coord_clusters, device=torch.device('cuda'))
-        # labels = np.array(cluster_ids)
         labels = cluster_ids.tolist()
         across_hyperedge = []
-        # # for i in range(coord_clusters):
-        # #     indices = np.where(labels == i)[0]
-        # #     coord_distribution.append(tuple(indices))
-        # #     distances = np.linalg.norm(per_coord[indices] - cluster_centers[i], axis=1)
-        # #     sorted_distances_indices = np.argsort(distances)
-        # #     across_hyperedge.extend(indices[sorted_distances_indices[:int(len(sorted_distances_indices) * feat_size_ratio)]])
+        # for i in range(coord_clusters):
+        #     indices = np.where(labels == i)[0]
+        #     coord_distribution.append(tuple(indices))
+        #     distances = np.linalg.norm(per_coord[indices] - cluster_centers[i], axis=1)
+        #     sorted_distances_indices = np.argsort(distances)
+        #     across_hyperedge.extend(indices[sorted_distances_indices[:int(len(sorted_distances_indices) * feat_size_ratio)]])
         for x in set(labels):
             across_hyperedge.append(labels.index(x))
             indi = [i for i, value in enumerate(labels) if value == x]
             coord_distribution.append(tuple(indi))
         coord_distribution.append(tuple(across_hyperedge))
-        # print(coord_distribution)
-        # assert 0 == 1, f""
         # if the patches of a wsi is smaller than feat_size, it is not enough for sampling a Fset, use [0] to pad it
         if per_feat.shape[-2] < feat_size:
             margin = feat_size - per_feat.shape[-2]
@@ -370,8 +364,8 @@ def get_feats(feat_list: List[torch.Tensor],
         construction_list.append(sorted_construction)
         coord_distribution_list.append(coord_distribution)
         assert len(coord_distribution_list) == len(construction_list), f""
-    # print(len(feats))
-    # print(len(indis))
+
     feats = torch.cat(feats, 0)
-    # print(feats.shape)
-    return feats, construction_list, coord_distribution_list, key_patches_list
+    # If you are running pretrain.sh, please use this row of code, or use next one:
+    return feats, construction_list, coord_distribution_list
+    #return feats, construction_list, coord_distribution_list, key_patches_list
