@@ -123,7 +123,7 @@ cd runs
 sh scratch.sh
 # fine-tuning with pre-training weights 
 sh fintune.sh
-# exporting the desicion-making patches by testing with the weights of the target stage
+# exporting the desicion-making patches by testing with the weights of the target stage. Note: when you are running get_key_patch.sh，maybe you need to change the run() function in train_HeMiCoRe.py to another. 
 sh get_key_patch.sh
 ```
 
