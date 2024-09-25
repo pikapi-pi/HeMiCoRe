@@ -159,13 +159,13 @@ def get_optimizer(args, model, fc):
     return optimizer
 
 
-def get_scheduler(args, optimizer):#学习率的调整策略
+def get_scheduler(args, optimizer):
     if optimizer is None:
         return None
     if args.scheduler == 'StepLR':
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
     elif args.scheduler == 'CosineAnnealingLR':
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs - args.warmup, eta_min=1e-6)#优化器， 最大迭代次数，最小学习率
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs - args.warmup, eta_min=1e-6)
     elif args.scheduler is None:
         scheduler = None
     else:
@@ -375,28 +375,13 @@ def run(args):
 
     # Dataset
     train_set, dim_patch, train_length = get_datasets(args)
-    args.num_data = train_length * args.data_repeat  #对比学习需要更多的数据
+    args.num_data = train_length * args.data_repeat  
     args.eval_step = int(args.num_data / args.batch_size)
-    # if args.arch == "HGNN":
-    #     HGNN_data = {}
-    #     feat, cluster, label, case_id = train_set[0]
-    #     assert len(feat.shape) == 2, f"{feat.shape}"
-    #     # feat = feat.squeeze(0)
-    #     label = label.unsqueeze(0)
-    #
-    #     HGNN_data['n'] = feat.shape[-2]
-    #     HGNN_data['hypergraph'] = {str(j): cluster[j] for j in range(len(cluster))}
-    #     HGNN_data['features'] = feat
-    #     HGNN_data['labels'] = label
-    #     args.GCN_hidden_dim = dim_patch
-    # else:
-    #     HGNN_data = None
     print(f"train_length: {train_length}, epoch_step: {args.num_data}, eval_step: {args.eval_step}")
-    # assert train_set is None, "train_set已保存"
 
     # Model, Criterion, Optimizer and Scheduler
     model, fc, ppo = create_model(args, dim_patch)
-    criterion = NT_Xent(args.batch_size, args.temperature)  # 损失函数, 128, 1.0
+    criterion = NT_Xent(args.batch_size, args.temperature) 
     optimizer = get_optimizer(args, model, fc)
     scheduler = get_scheduler(args, optimizer)
 
