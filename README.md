@@ -1,4 +1,4 @@
-# Hypergraph-based Multiple-instance Learning for Pan-cancer Survival Prediction on Whole Slide Pathology Images
+# Hypergraph-based Multiple-instance Learning for Annotation-free Pan-cancer Survival Prediction on Whole Slide Pathology Images
 This repo is the PyTorch implementation for the HeMiCoRe described in the paper "Hypergraph-based Multiple-instance Learning for Annotation-free Pan-cancer Survival Prediction on Whole Slide Pathology Images".
 
 ![fig2](figs/12_44.png)
@@ -32,6 +32,9 @@ This repo is the PyTorch implementation for the HeMiCoRe described in the paper 
 │      losses.py    # loss function
         
 ```
+## OS Requirements
+
+The code was designed on Ubuntu 22.04 LTS
 
 ## Requirements
 
