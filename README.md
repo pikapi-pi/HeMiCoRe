@@ -107,7 +107,7 @@ The format of  input csv file:
 
 ## Pre-training
 
-pre-training by hypergraph-level contrastive learning. 
+pre-training by hypergraph-level contrastive learning. Note: maybe you need to change the final row of code in utils/datasets.py.
 
 ```shell
 cd runs
@@ -116,7 +116,7 @@ sh pretrain.sh
 
 ## Training from scratch, fine-tuning, and exporting the desicion-making patches
 
-evaluation of our proposed framework HeMiCoRe. 
+evaluation of our proposed framework HeMiCoRe. Note: maybe you need to change the final row of code in utils/datasets.py.
 
 ```shell
 cd runs
