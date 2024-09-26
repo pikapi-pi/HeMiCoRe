@@ -44,7 +44,8 @@ environment.yaml
 
 ### Download
 
-> TCGA: Use [GDC data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) with a manifest file and configuration file. Please see the section Results in the paper for the sample selection standard. 
+> TCGA: Use [GDC data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) with a manifest file and configuration file. Please see the section Results in the paper for the sample selection standard.
+
 > Private dataset: Use [link](https://pan.baidu.com/s/1KBN8mSo3CH4Azw9GWskItw?pwd=prma). We provide the private dataset with de-identified data only for replicating the results.
 
 
