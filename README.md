@@ -122,7 +122,7 @@ evaluation of our proposed framework HeMiCoRe. Note: maybe you need to change th
 
 ```shell
 cd runs
-# training from scatch with the initail weights, does not load pre-trained weights
+# training from scatch with the initial weights, does not load pre-trained weights
 sh scratch.sh
 # fine-tuning with pre-training weights 
 sh fintune.sh
