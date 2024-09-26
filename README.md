@@ -75,10 +75,10 @@ environment.yaml
 
 The format of  input csv file:
 
-|  case_id   |                features_filepath                | label |           clusters_filepath                      |               clusters_json_filepath              |
-| :--------: |:-----------------------------------------------:| :---: |:------------------------------------------------:|:-------------------------------------------------:|
-| normal_001 | /path/to/patch_features/2014_00322-3-HE-DX1.npz |   0   | /path/to/cluster_indices/2014_00322-3-HE-DX1.npz | /path/to/cluster_indices/2014_00322-3-HE-DX1.json |
-|    ...     |                       ...                       |  ...  |                       ...                        |                        ...                        |
+|       case_id       |                features_filepath                | label |           clusters_filepath                      |               clusters_json_filepath              |
+| :-----------------: |:-----------------------------------------------:| :---: |:------------------------------------------------:|:-------------------------------------------------:|
+| 2014_00322-3-HE-DX1 | /path/to/patch_features/2014_00322-3-HE-DX1.npz |   0   | /path/to/cluster_indices/2014_00322-3-HE-DX1.npz | /path/to/cluster_indices/2014_00322-3-HE-DX1.json |
+|         ...         |                       ...                       |  ...  |                       ...                        |                        ...                        |
 
 > **case_id**: [str] the index for each WSI. 
 >
