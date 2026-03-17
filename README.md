@@ -1,6 +1,6 @@
 # A hypergraph-based model for tumor prognosis using local and global information fusion on H&E-stained histology images
 This repo is the PyTorch implementation for the HeMiCoRe described in the paper "A hypergraph-based model for tumor prognosis using local and global
-information fusion on H&E-stained histology images".
+information fusion on H&E-stained histology images", which has been published on Medical Image Analysis (https://doi.org/10.1016/j.media.2026.103991).
 
 
 ## Folder structures
