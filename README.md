@@ -1,5 +1,6 @@
-# Hypergraph-based Multiple-instance Learning for Annotation-free Pan-cancer Survival Prediction on Whole Slide Pathology Images
-This repo is the PyTorch implementation for the HeMiCoRe described in the paper "Hypergraph-based Multiple-instance Learning for Annotation-free Pan-cancer Survival Prediction on Whole Slide Pathology Images".
+# A hypergraph-based model for tumor prognosis using local and global information fusion on H&E-stained histology images
+This repo is the PyTorch implementation for the HeMiCoRe described in the paper "A hypergraph-based model for tumor prognosis using local and global
+information fusion on H&E-stained histology images".
 
 
 ## Folder structures
@@ -46,7 +47,7 @@ environment.yaml
 
 > TCGA: Use [GDC data portal](https://docs.gdc.cancer.gov/Data_Transfer_Tool/Users_Guide/Getting_Started/) with a manifest file and configuration file. Please see the section Results in the paper for the sample selection standard.
 
-> Private dataset: Use [link](https://pan.baidu.com/s/1KBN8mSo3CH4Azw9GWskItw?pwd=prma). We provide the private dataset with de-identified data only for replicating the results.
+> Private dataset: Use [link]([https://www.scidb.cn /en/anonymous/UVpOclV2]). We provide the private dataset with de-identified data only for replicating the results.
 
 
 ### WSI Processing
